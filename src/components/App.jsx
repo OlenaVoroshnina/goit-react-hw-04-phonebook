@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { nanoid } from 'nanoid';
 import PropTypes from 'prop-types';
 import ContactForm from './ContactForm/ContactForm';
@@ -6,84 +6,69 @@ import ContactList from './ContactList/ContactList';
 import Filter from './Filter/Filter';
 import { Container, Title, TitleTwo } from './App.styled';
 
-export class App extends Component {
-  state = {
-    contacts: [
-      { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-      { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-      { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-      { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-    ],
-    filter: '',
-  };
+const friends = [
+  { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
+  { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
+  { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
+  { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
+];
 
-  componentDidUpdate(prevProps, prevState) {
-    if (this.state.contacts !== prevState) {
-      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-    }
-  }
+export function App() {
+  const parsedContacts = JSON.parse(localStorage.getItem('contacts'));
 
-  componentDidMount() {
-    const contacts = localStorage.getItem('contacts');
-    const parsedContacts = JSON.parse(contacts);
-    if (parsedContacts) {
-      this.setState({ contacts: parsedContacts });
-    }
-  }
+  const [contacts, setContacts] = useState(() => parsedContacts ?? friends);
+  const [filter, setFilter] = useState('');
 
-  handleFormSubmit = data => {
+  useEffect(() => {
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+  }, [contacts]);
+
+  const handleFormSubmit = data => {
     const newContact = {
       id: nanoid(4),
       ...data,
     };
 
-    if (this.state.contacts.find(contact => contact.name === data.name)) {
+    if (contacts.find(contact => contact.name === data.name)) {
       alert(`${data.name} is already in contacts.`);
       return;
     }
-    this.setState(prevState => ({
-      contacts: [newContact, ...prevState.contacts],
-    }));
+    setContacts(prevState => [...prevState, {...newContact}]);
   };
 
-  deleteContact = contactId => {
-    this.setState(prevState => ({
-      contacts: prevState.contacts.filter(({ id }) => id !== contactId),
-    }));
+  const changeFilter = e => {
+    setFilter(e.currentTarget.value);
   };
 
-  changeFilter = e => {
-    this.setState({ filter: e.currentTarget.value });
+  const deleteContact = contactId => {
+    setContacts(prevState => prevState.filter(({ id }) => id !== contactId));
   };
 
-  getVisibleContacts = () => {
-    const { filter, contacts } = this.state;
+  const getVisibleContacts = () => {
     const normalizedFilter = filter.toLowerCase();
     return contacts.filter(contact =>
       contact.name.toLowerCase().includes(normalizedFilter)
     );
   };
 
-  render() {
-    const { filter, contacts } = this.state;
-    const visibleContactsList = this.getVisibleContacts();
-    return (
-      <Container>
-        <Title>Phonebook</Title>
-        <ContactForm onSubmit={this.handleFormSubmit} />
+  const visibleContactsList = getVisibleContacts();
 
-        <TitleTwo>Contacts</TitleTwo>
-        <Filter value={filter} onChange={this.changeFilter} />
+  return (
+    <Container>
+      <Title>Phonebook</Title>
+      <ContactForm onSubmit={handleFormSubmit} />
 
-        {contacts.length > 0 ? (
-          <ContactList
-            contacts={visibleContactsList}
-            onDeleteContact={this.deleteContact}
-          />
-        ) : null}
-      </Container>
-    );
-  }
+      <TitleTwo>Contacts</TitleTwo>
+      <Filter value={filter} onChange={changeFilter} />
+
+      {contacts.length > 0 ? (
+        <ContactList
+          contacts={visibleContactsList}
+          onDeleteContact={deleteContact}
+        />
+      ) : null}
+    </Container>
+  );
 }
 
 App.propTypes = {
@@ -96,3 +81,4 @@ App.propTypes = {
   ),
   filter: PropTypes.string,
 };
+
