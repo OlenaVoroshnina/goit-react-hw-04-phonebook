@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { nanoid } from 'nanoid';
 import PropTypes from 'prop-types';
+import storage from './helpers/storage';
 import ContactForm from './ContactForm/ContactForm';
 import ContactList from './ContactList/ContactList';
 import Filter from './Filter/Filter';
@@ -14,13 +15,13 @@ const friends = [
 ];
 
 export function App() {
-  const parsedContacts = JSON.parse(localStorage.getItem('contacts'));
+ 
 
-  const [contacts, setContacts] = useState(() => parsedContacts ?? friends);
+  const [contacts, setContacts] = useState(storage.load('contacts', '') ?? friends);
   const [filter, setFilter] = useState('');
 
   useEffect(() => {
-    localStorage.setItem('contacts', JSON.stringify(contacts));
+    storage.save('contacts', contacts);
   }, [contacts]);
 
   const handleFormSubmit = data => {
